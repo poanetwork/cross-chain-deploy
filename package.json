@@ -1,0 +1,17 @@
+{
+  "name": "cross-chain-deploy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "deploy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^5.0.0",
+    "ethereumjs-tx": "^1.3.3",
+    "ethereumjs-util": "^5.1.4",
+    "web3": "^1.0.0-beta.30"
+  }
+}
