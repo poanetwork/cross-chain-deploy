@@ -17,11 +17,12 @@ GAS_PRICE = web3.utils.toWei(GAS_PRICE, 'gwei');
 //has to start with 0x
 const code = BYTECODE;
 
-generateDeployTx = () => {
+
+generateDeployTx = (gasLimit) => {
     const rawTx = {
         nonce: 0,
         gasPrice: web3.utils.toHex(GAS_PRICE),
-        gasLimit: 6700000,
+        gasLimit: web3.utils.toHex(gasLimit),
         value: 0,
         data: code,
         v: 27,
@@ -39,14 +40,22 @@ generateDeployTx = () => {
 
 
 deploy = async (web3, account) => {
-    const res = generateDeployTx();
+    let gasLimit = await web3.eth.estimateGas({
+        from: account,
+        data: BYTECODE,
+        value: '0x0'
+    })
+    console.log('gasLimit', gasLimit);
+    const BN = web3.utils.BN;
+    const toFund = new BN(GAS_PRICE).mul(new BN(gasLimit))
+    console.log('toFund', toFund.toString(10));
+    const res = generateDeployTx(gasLimit);
     // check if address doesn't exist
     const deployedCode = await web3.eth.getCode(res.contractAddr);
     
     if (deployedCode.length <=3 ) {
         // console.log(res);
-        await sendSignedTx(account, res.sender);
-        // await web3.eth.sendTransaction({from: account, to: res.sender, value: "100000000000000000"/* web3.utils.toWei(0.1) */});
+        await sendSignedTx(account, res.sender, toFund.toString(16));
         await web3.eth.sendSignedTransaction(res.rawTx)
         .on('transactionHash', function(hash){console.log('contract deployment hash', hash)})
         .on('error', console.error);
@@ -57,7 +66,7 @@ deploy = async (web3, account) => {
 };
 deploy(web3, UNLOCKED_ADDRESS)
 
-async function sendSignedTx(from, to){
+async function sendSignedTx(from, to, toFund){
     var txcount = await web3.eth.getTransactionCount(UNLOCKED_ADDRESS);
     console.log('txcou', txcount)
     const privateKey = Buffer.from(PRIVATE_KEY, 'hex')
@@ -68,7 +77,7 @@ async function sendSignedTx(from, to){
         gasPrice:  web3.utils.toHex(GAS_PRICE),
         gasLimit:   web3.utils.toHex('21000'),
         to,
-        value: web3.utils.toHex('100000000000000000')
+        value: '0x' + toFund
       }
       var tx = new EthereumTx(rawTx);
       tx.sign(privateKey);
